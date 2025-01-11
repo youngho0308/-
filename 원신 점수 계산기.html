@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>캐릭터 별 성유물 점수 계산기</title>
+</head>
+<body>
+  <h1>캐릭터 별 성유물 점수 계산기</h1>
+
+  <!-- 캐릭터 추가 버튼 -->
+  <button onclick="addCharacter()">캐릭터 추가</button>
+  <p id="characterWarning" style="color: red;"></p>
+
+  <!-- 캐릭터가 추가될 영역 -->
+  <div id="characterContainer"></div>
+
+  <script>
+    const MAX_ARTIFACTS = 5; // 성유물 최대 개수
+    const MAX_OPTIONS = 4; // 각 성유물당 최대 옵션 수
+    const multipliers = {
+      critRate: 2,
+      critDamage: 1,
+      attack: 0.5,
+      attackPercent: 1,
+      hp: 0.2,
+      hpPercent: 0.5,
+      defense: 0.25,
+      defensePercent: 0.5,
+      elementalMastery: 0.8,
+      energyRecharge: 0.6,
+    };
+
+    const characters = [
+      "한운", "행추", "향릉", "피슬", "프레미네", "푸리나", "파루잔", "키라라", "키니치", "카치나", "카에데하라 카즈하", "카베", "카미사토 아야토", "카미사토 아야카", "클레", "클로린드", "쿠키 시노부", "쿠죠 사라", "콜레이", "타이나리", "타르탈리아", "토마", "차스카", "치치", "치오리", "샤를로트", "시틀라리", "시그윈", "시카노인 헤이조", "슈브르즈", "실로닌", "산고노미야 코코미", "사이노", "사이유", "라이오슬리", "라이덴 쇼군", "레일라", "레이저", "로자리아", "리넷", "리니", "리사", "노엘", "느비예트", "닐루", "나히다", "나비아", "마비카", "말라니", "미카", "모나", "방랑자", "백출", "벤티", "북두", "디오나", "데히야", "다이루크", "중운", "종려", "진", "연비", "엠버", "에밀리", "아를레키노", "아라타키 이토", "알하이탐", "알베도"
+    ];
+
+    function addCharacter() {
+      const container = document.getElementById("characterContainer");
+      const characterCount = container.childElementCount + 1;
+
+      // 캐릭터 섹션 생성
+      const div = document.createElement("div");
+      div.className = "character";
+      div.innerHTML = `
+        <h2>캐릭터 ${characterCount}</h2>
+        <label for="characterSelect">캐릭터 선택:</label>
+        <select name="characterSelect">
+          ${characters.map(name => `<option value="${name}">${name}</option>`).join("")}
+        </select>
+        <button onclick="addArtifact(this)">성유물 추가</button>
+        <p class="artifactWarning" style="color: red;"></p>
+        <div class="artifactContainer"></div>
+        <button onclick="calculateCharacterScore(this)">캐릭터 점수 계산</button>
+        <p class="characterResult"></p>
+      `;
+      container.appendChild(div);
+    }
+
+    function addArtifact(button) {
+      const character = button.parentElement;
+      const container = character.querySelector(".artifactContainer");
+      const warning = character.querySelector(".artifactWarning");
+
+      // 현재 성유물 개수 확인
+      const artifactCount = container.childElementCount;
+
+      if (artifactCount >= MAX_ARTIFACTS) {
+        warning.innerText = "성유물은 최대 5개까지만 추가할 수 있습니다.";
+        return;
+      }
+
+      // 경고 메시지 초기화
+      warning.innerText = "";
+
+      // 성유물 섹션 생성
+      const div = document.createElement("div");
+      div.className = "artifact";
+      div.innerHTML = `
+        <h3>성유물 ${artifactCount + 1}</h3>
+        <label for="artifactType">성유물 유형: </label>
+        <select name="artifactType">
+          <option value="flower">생명의 꽃</option>
+          <option value="feather">죽음의 깃털</option>
+          <option value="sand">시간의 모래</option>
+          <option value="goblet">공간의 성배</option>
+          <option value="crown">이성의 왕관</option>
+        </select>
+        <button onclick="addOption(this)">옵션 추가</button>
+        <p class="warning" style="color: red;"></p>
+        <div class="optionContainer"></div>
+        <button onclick="calculateArtifactScore(this)">성유물 점수 계산</button>
+        <p class="artifactResult"></p>
+      `;
+      container.appendChild(div);
+    }
+
+    function addOption(button) {
+      const artifact = button.parentElement;
+      const optionContainer = artifact.querySelector(".optionContainer");
+      const warning = artifact.querySelector(".warning");
+
+      // 현재 옵션 개수 확인
+      const currentOptions = optionContainer.childElementCount;
+
+      if (currentOptions >= MAX_OPTIONS) {
+        warning.innerText = "옵션의 수가 최대치입니다. 더 이상 추가할 수 없습니다.";
+        return;
+      }
+
+      // 경고 메시지 초기화
+      warning.innerText = "";
+
+      // 새 입력 필드와 드롭다운 메뉴 생성
+      const div = document.createElement("div");
+      div.innerHTML = `
+        <select>
+          <option value="critRate">치명타 확률</option>
+          <option value="critDamage">치명타 피해</option>
+          <option value="attack">공격력</option>
+          <option value="attackPercent">공격력 백분율</option>
+          <option value="hp">HP</option>
+          <option value="hpPercent">HP 백분율</option>
+          <option value="defense">방어력</option>
+          <option value="defensePercent">방어력 백분율</option>
+          <option value="elementalMastery">원소 마스터리</option>
+          <option value="energyRecharge">원소 충전 효율</option>
+        </select>
+        <input type="number" placeholder="값" />
+        <button onclick="removeField(this)">삭제</button>
+      `;
+      optionContainer.appendChild(div);
+    }
+
+    function removeField(button) {
+      const optionContainer = button.parentElement.parentElement;
+      const warning = optionContainer.parentElement.querySelector(".warning");
+
+      // 입력 필드 삭제
+      button.parentElement.remove();
+
+      // 경고 메시지 초기화 (최대 옵션 제한 해제됨)
+      if (optionContainer.childElementCount < MAX_OPTIONS) {
+        warning.innerText = "";
+      }
+    }
+
+    function calculateArtifactScore(button) {
+      const artifact = button.parentElement;
+      const optionContainer = artifact.querySelector(".optionContainer");
+      const fields = optionContainer.querySelectorAll("div");
+      let totalScore = 0;
+
+      fields.forEach(field => {
+        const select = field.querySelector("select").value;
+        const value = parseFloat(field.querySelector("input").value) || 0;
+        totalScore += value * (multipliers[select] || 1);
+      });
+
+      const roundedScore = totalScore.toFixed(1);
+      artifact.querySelector(".artifactResult").innerText = `성유물 점수: ${roundedScore} 점`;
+    }
+
+    function calculateCharacterScore(button) {
+      const character = button.parentElement;
+      const artifacts = character.querySelectorAll(".artifact");
+      let grandTotal = 0;
+
+      artifacts.forEach(artifact => {
+        const resultText = artifact.querySelector(".artifactResult").innerText;
+        const match = resultText.match(/(\d+\.\d+)/);
+        if (match) {
+          grandTotal += parseFloat(match[1]);
+        }
+      });
+
+      const roundedGrandTotal = grandTotal.toFixed(1);
+      character.querySelector(".characterResult").innerText = `캐릭터 총 점수: ${roundedGrandTotal} 점`;
+    }
+  </script>
+</body>
+</html>
